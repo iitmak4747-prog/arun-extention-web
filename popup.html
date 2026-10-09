@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ARUN</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+
+<div id="appShell">
+  <!-- Custom background media sits behind everything, blurred; panels stay opaque enough to keep borders/text readable -->
+  <div id="bgImageLayer" class="bg-image-layer"></div>
+  <video id="bgVideoLayer" class="bg-video-layer" autoplay muted loop playsinline></video>
+
+  <div id="appScroll">
+
+<!-- HEADER -->
+<header class="header">
+  <div class="brand-name">ARUN</div>
+  <div class="header-right">
+    <div id="totalUsage" class="total-usage">⏱ 0s today</div>
+    <button id="themeToggle" class="theme-toggle-btn" title="Toggle theme">🌙</button>
+    <button id="settingsBtn" class="theme-toggle-btn" title="Settings">⚙️</button>
+  </div>
+</header>
+
+<!-- DAILY GOAL -->
+<div class="daily-goal-bar" id="dailyGoalBar">
+  <span id="dailyGoalText" style="display:none"></span>
+  <input id="dailyGoalInput" class="text-input" placeholder="🎯 Write today's #1 goal..." />
+  <button id="dailyGoalEditBtn" title="Edit" style="display:none">✏️</button>
+  <button id="dailyGoalSaveBtn" class="btn btn-primary">Save</button>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="tab-btn active" data-tab="track">Track</button>
+  <button class="tab-btn" data-tab="block">Block</button>
+  <button class="tab-btn" data-tab="speed">Speed</button>
+  <button class="tab-btn" data-tab="skin">Skin</button>
+  <button class="tab-btn" data-tab="pomo">Pomo</button>
+  <button class="tab-btn" data-tab="notes">Notes</button>
+  <button class="tab-btn" data-tab="tasks">Tasks</button>
+  <button class="tab-btn" data-tab="habits">Habits</button>
+</nav>
+
+<!-- ===== TRACK TAB ===== -->
+<section class="tab-content active" id="tab-track">
+
+  <!-- Live bar -->
+  <div class="live-bar">
+    <span class="live-dot"></span>
+    <span id="liveDomain">—</span>
+    <span id="liveTime" class="live-time">0s</span>
+  </div>
+
+  <!-- Date picker -->
+  <div class="date-row">
+    <label class="small-label">Date:</label>
+    <select id="datePicker" class="picker"></select>
+  </div>
+
+  <!-- Today's totals -->
+  <div class="today-stats-row">
+    <div class="today-stat-box study">
+      <div class="today-stat-label">📗 Study Today</div>
+      <div id="todayStudyVal" class="today-stat-val">0s</div>
+    </div>
+    <div class="today-stat-box waste">
+      <div class="today-stat-label">📕 Waste Today</div>
+      <div id="todayWasteVal" class="today-stat-val">0s</div>
+    </div>
+    <div class="today-stat-box score" id="focusScoreBox" title="Study time + tasks done + habits ticked today">
+      <div class="today-stat-label">🎯 Focus Score</div>
+      <div id="focusScoreVal" class="today-stat-val">—</div>
+    </div>
+  </div>
+
+  <!-- Study vs Waste line graph, range selectable -->
+  <div class="chart-section-label-row">
+    <span class="chart-section-label" id="dayGraphLabel">7-Day History</span>
+    <select id="dayGraphRangeSelect" class="picker chart-range-select">
+      <option value="7">7 days</option>
+      <option value="14">14 days</option>
+      <option value="30">30 days</option>
+      <option value="90">90 days</option>
+      <option value="all">All time</option>
+    </select>
+  </div>
+  <canvas id="dayGraph" width="362" height="120"></canvas>
+  <div class="chart-legend">
+    <span><span class="legend-dot study"></span>Study</span>
+    <span><span class="legend-dot waste"></span>Waste</span>
+  </div>
+
+  <!-- Site list -->
+  <div id="siteList" class="site-list"></div>
+
+  <!-- Weekly report -->
+  <button id="weeklyReportBtn" class="btn btn-ghost" style="width:100%;margin-top:10px">📊 Weekly Report</button>
+  <div id="weeklyReportPanel" style="display:none;margin-top:6px"></div>
+
+</section>
+
+<!-- ===== BLOCK TAB ===== -->
+<section class="tab-content" id="tab-block">
+  <p class="section-title">Blocked Sites</p>
+  <div class="block-input-row">
+    <input id="blockInput" class="text-input" placeholder="instagram.com" />
+    <button id="addBlockBtn" class="btn btn-danger">+ Add</button>
+  </div>
+  <div class="ao-mode-row" style="margin-top:6px">
+    <input type="number" id="blockLockInput" class="pomo-dur-input" min="0" value="0" style="width:70px" title="0 = no lock. Max timed lock = 12 hours." />
+    <select id="blockLockUnit" class="picker" style="flex:1">
+      <option value="60000">Minutes</option>
+      <option value="3600000">Hours</option>
+      <option value="always">Always (I'll unblock myself)</option>
+    </select>
+  </div>
+  <ul id="blockList" class="block-list"></ul>
+
+  <p class="section-title" style="margin-top:16px">⏱️ Wasted Time Limit</p>
+  <div class="wasted-time-summary" id="wastedTimeSummary">Today's wasted time: 0m</div>
+  <div class="settings-row settings-row-inline">
+    <label>Limit TOTAL wasted time per day</label>
+    <input type="checkbox" id="wastedLimitToggle" />
+  </div>
+  <div class="settings-row" id="wastedLimitRow" style="display:none">
+    <label>Max wasted time (hours)</label>
+    <input type="number" id="wastedLimitHours" class="pomo-dur-input" min="0" step="0.5" value="5" />
+  </div>
+  <button id="wastedLimitSaveBtn" class="btn btn-primary" style="width:100%;margin-top:4px">Save total limit</button>
+
+  <div class="settings-row">
+    <label>When any limit is hit, lock the site…</label>
+    <select id="hardLockCooldownSelect" class="picker">
+      <option value="0">Until midnight (strict)</option>
+      <option value="15">For 15 minutes (cooldown)</option>
+      <option value="30">For 30 minutes (cooldown)</option>
+      <option value="60">For 1 hour (cooldown)</option>
+    </select>
+  </div>
+
+  <div class="settings-row">
+    <select id="siteLimitSelect" class="picker"></select>
+  </div>
+  <div class="settings-row">
+    <label>Max time for that site (hours)</label>
+    <input type="number" id="siteLimitHours" class="pomo-dur-input" min="0" step="0.5" value="1" />
+  </div>
+  <button id="siteLimitSaveBtn" class="btn btn-primary" style="width:100%;margin-top:4px">Save site limit (0 = no limit)</button>
+  <div id="siteLimitList" style="margin-top:6px"></div>
+
+  <p class="section-title" style="margin-top:16px">⏰ Auto-Open Scheduler</p>
+  <input id="aoUrlInput" class="text-input" placeholder="https://example.com/page-to-open" />
+  <div class="ao-mode-row">
+    <select id="aoModeSelect" class="picker">
+      <option value="daily">Daily at a time</option>
+      <option value="interval">Repeat every interval</option>
+    </select>
+  </div>
+  <div id="aoDailyRow" class="ao-sub-row">
+    <input type="time" id="aoTimeInput" class="pomo-dur-input" />
+  </div>
+  <div id="aoIntervalRow" class="ao-sub-row" style="display:none">
+    <input type="number" id="aoIntervalInput" class="pomo-dur-input" min="1" value="30" style="width:80px" />
+    <select id="aoIntervalUnit" class="picker" style="flex:1">
+      <option value="1">Minutes</option>
+      <option value="60">Hours</option>
+    </select>
+  </div>
+  <button id="addAutoOpenBtn" class="btn btn-primary" style="width:100%;margin-top:8px">+ Schedule Auto-Open</button>
+  <div id="autoOpenList" class="timetable-list" style="margin-top:8px"></div>
+  <div id="autoOpenEmpty" class="empty-state" style="display:none">No scheduled auto-opens yet.</div>
+</section>
+
+<!-- ===== SPEED TAB ===== -->
+<section class="tab-content" id="tab-speed">
+  <p class="section-title">Video Speed Booster</p>
+  <div class="speed-display">
+    <span id="speedVal">1.0</span><span class="speed-unit">x</span>
+  </div>
+  <input type="range" id="speedSlider" min="0.25" max="15" step="0.25" value="1" class="slider" />
+  <div class="preset-row">
+    <button class="preset-btn" data-speed="0.5">0.5x</button>
+    <button class="preset-btn active" data-speed="1">1x</button>
+    <button class="preset-btn" data-speed="1.5">1.5x</button>
+    <button class="preset-btn" data-speed="2">2x</button>
+    <button class="preset-btn" data-speed="5">5x</button>
+    <button class="preset-btn" data-speed="10">10x</button>
+    <button class="preset-btn" data-speed="15">15x</button>
+  </div>
+  <button id="applySpeed" class="btn btn-primary" style="margin-top:12px;width:100%">Apply to Page</button>
+
+  <div class="adblock-card">
+    <div class="adblock-card-top">
+      <div>
+        <div class="adblock-title">🚫 Ad Blocker</div>
+        <div class="adblock-sub">Blocks Google ad networks + auto-skips YouTube ads</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="adBlockToggle" checked />
+        <span class="switch-slider"></span>
+      </label>
+    </div>
+    <div id="adBlockStatus" class="adblock-status">Active — ads are being blocked</div>
+  </div>
+</section>
+
+<!-- ===== SKIN TAB — per-website background / border / opacity ===== -->
+<section class="tab-content" id="tab-skin">
+  <p class="section-title">🎨 Website Skin</p>
+
+  <div class="settings-row">
+    <label>Applies to</label>
+    <select id="skinScopeSelect" class="picker">
+      <option value="site">Only this site</option>
+      <option value="default">Default — every website</option>
+    </select>
+  </div>
+  <div class="skin-current-site" id="skinCurrentSite">—</div>
+  <p class="block-hint" id="skinKnownSiteHint" style="display:none;margin-top:-6px"></p>
+
+  <div class="settings-row">
+    <label>Background image</label>
+    <input type="file" id="skinBgUpload" accept="image/*" />
+    <span id="skinBgName" class="skin-file-name"></span>
+    <img id="skinBgPreview" class="skin-bg-preview" style="display:none" alt="Background preview" />
+  </div>
+  <div class="settings-row" id="skinBgRemoveRow" style="display:none">
+    <button id="skinRemoveBgBtn" class="btn btn-danger" style="width:100%">Remove background image</button>
+  </div>
+  <div class="settings-row">
+    <label>Background video <span style="font-weight:400">(overrides the image above when set — max 25MB, short looping clips work best)</span></label>
+    <input type="file" id="skinBgVideoUpload" accept="video/*" />
+    <span id="skinBgVideoName" class="skin-file-name"></span>
+  </div>
+  <div class="settings-row" id="skinBgVideoRemoveRow" style="display:none">
+    <button id="skinRemoveBgVideoBtn" class="btn btn-danger" style="width:100%">Remove background video</button>
+  </div>
+  <div class="settings-row">
+    <label>Background opacity (<span id="skinBgOpacityVal">70</span>%)</label>
+    <input type="range" id="skinBgOpacityRange" min="0" max="100" value="70" class="settings-slider" />
+  </div>
+  <div class="settings-row">
+    <label>Background fit</label>
+    <select id="skinBgFit" class="picker">
+      <option value="cover">Cropped to fill (Cover)</option>
+      <option value="contain">Whole image, no cropping (Contain)</option>
+      <option value="stretch">Stretched to fill</option>
+    </select>
+  </div>
+  <div class="settings-row">
+    <label>Background blur (<span id="skinBgBlurVal">0</span>px)</label>
+    <input type="range" id="skinBgBlurRange" min="0" max="20" value="0" class="settings-slider" />
+  </div>
+  <div class="settings-row settings-row-inline">
+    <label>Solid canvas color</label>
+    <input type="checkbox" id="skinBgColorToggle" />
+  </div>
+  <div class="settings-row" id="skinBgColorRow" style="display:none">
+    <label>Canvas color <span style="font-weight:400">(fills gaps around "Contain" images, or use alone for a flat color background)</span></label>
+    <div class="skin-color-field">
+      <div class="color-input-row">
+        <span title="🎨 Click for the full color picker" class="color-swatch-preview" id="skinBgColorSwatch" style="background:#101018"></span>
+        <input type="text" id="skinBgColor" class="color-hex-input" value="#101018" maxlength="7" placeholder="#rrggbb" />
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-row settings-row-inline">
+    <label>Force site background see-through</label>
+    <input type="checkbox" id="skinForceTransparentToggle" />
+  </div>
+  <div class="settings-row" id="skinForceTransparentOpacityRow" style="display:none">
+    <label>How much of the site's own background stays (<span id="skinForceTransparentOpacityVal">0</span>%)</label>
+    <input type="range" id="skinForceTransparentOpacityRange" min="0" max="100" value="0" class="settings-slider" />
+  </div>
+
+  <div class="settings-row settings-row-inline">
+    <label>Page frame border</label>
+    <input type="checkbox" id="skinFrameToggle" />
+  </div>
+  <div class="settings-row" id="skinFrameWidthRow" style="display:none">
+    <label>Frame width (<span id="skinFrameWidthVal">6</span>px)</label>
+    <input type="range" id="skinFrameWidthRange" min="1" max="30" value="6" class="settings-slider" />
+  </div>
+  <div class="settings-row" id="skinFrameColorRow" style="display:none">
+    <label>Frame color</label>
+    <div class="skin-color-field">
+      <div class="color-input-row">
+        <span title="🎨 Click for the full color picker" class="color-swatch-preview" id="skinFrameColorSwatch" style="background:#7c9cff"></span>
+        <input type="text" id="skinFrameColor" class="color-hex-input" value="#7c9cff" maxlength="7" placeholder="#rrggbb" />
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-row settings-row-inline">
+    <label>Border on boxes/cards</label>
+    <input type="checkbox" id="skinElBorderToggle" />
+  </div>
+  <div class="settings-row" id="skinElBorderWidthRow" style="display:none">
+    <label>Border width (<span id="skinElBorderWidthVal">1</span>px)</label>
+    <input type="range" id="skinElBorderWidthRange" min="1" max="10" value="1" class="settings-slider" />
+  </div>
+  <div class="settings-row" id="skinElBorderColorRow" style="display:none">
+    <label>Border color</label>
+    <div class="skin-color-field">
+      <div class="color-input-row">
+        <span title="🎨 Click for the full color picker" class="color-swatch-preview" id="skinElBorderColorSwatch" style="background:#7c9cff"></span>
+        <input type="text" id="skinElBorderColor" class="color-hex-input" value="#7c9cff" maxlength="7" placeholder="#rrggbb" />
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-row settings-row-inline">
+    <label>Custom text color</label>
+    <input type="checkbox" id="skinTextColorToggle" />
+  </div>
+  <div class="settings-row" id="skinTextColorRow" style="display:none">
+    <label>Text color</label>
+    <div class="skin-color-field">
+      <div class="color-input-row">
+        <span title="🎨 Click for the full color picker" class="color-swatch-preview" id="skinTextColorSwatch" style="background:#ffffff"></span>
+        <input type="text" id="skinTextColor" class="color-hex-input" value="#ffffff" maxlength="7" placeholder="#rrggbb" />
+      </div>
+    </div>
+  </div>
+
+  <p class="section-title" style="margin-top:16px">🎯 Picked Elements</p>
+  <button id="skinPickBtn" class="btn btn-primary" style="width:100%">🎯 Pick an element from the page</button>
+  <button id="skinRemovePickBtn" class="btn btn-danger" style="width:100%;margin-top:6px">🗑️ Remove an unwanted element</button>
+  <p class="block-hint" id="skinPickHint" style="margin-top:4px">Clicking either button closes the popup (normal Chrome behavior) — a small banner appears on the page. Click the element you want, then reopen this tab.</p>
+  <div id="skinPickedList" style="margin-top:6px"></div>
+  <div id="skinPickedEmpty" class="empty-state" style="display:none">No elements picked yet for this site.</div>
+
+  <p class="section-title" style="margin-top:16px">🧩 Group Picking (Mosaic)</p>
+  <button id="skinGroupPickBtn" class="btn btn-primary" style="width:100%">🧩 Auto-pick a group</button>
+  <div id="skinGroupList" style="margin-top:6px"></div>
+  <div id="skinGroupEmpty" class="empty-state" style="display:none">No groups picked yet for this site.</div>
+
+  <div class="ao-mode-row" style="margin-top:10px">
+    <button id="skinSaveBtn" class="btn btn-primary" style="flex:1">Save</button>
+    <button id="skinResetBtn" class="btn btn-danger" style="flex:1">Reset</button>
+  </div>
+  <p class="block-hint" id="skinStatus" style="margin-top:6px"></p>
+</section>
+
+<!-- ===== POMO TAB ===== -->
+<section class="tab-content" id="tab-pomo">
+
+  <!-- Duration Settings -->
+  <div class="pomo-settings">
+    <div class="pomo-dur-group">
+      <div class="pomo-dur-label">Study (min)</div>
+      <input type="number" id="studyMinInput" class="pomo-dur-input" value="25" min="1" max="120" />
+    </div>
+    <div class="pomo-dur-group">
+      <div class="pomo-dur-label">Break (min)</div>
+      <input type="number" id="breakMinInput" class="pomo-dur-input" value="5" min="1" max="60" />
+    </div>
+    <button id="applyDurBtn" class="btn btn-ghost" style="padding:6px 12px;font-size:11px;white-space:nowrap">Set</button>
+  </div>
+
+  <div class="settings-row settings-row-inline">
+    <label>🎯 Auto-block "waste" sites during study sessions</label>
+    <input type="checkbox" id="pomoBlockToggle" />
+  </div>
+
+  <div class="settings-row settings-row-inline">
+    <label>🏁 Today's goal (study sessions)</label>
+    <input type="number" id="pomoGoalInput" class="pomo-dur-input" min="0" max="20" placeholder="0" />
+  </div>
+  <div id="pomoGoalProgress" class="pomo-goal-progress" style="display:none"></div>
+
+  <div class="settings-row">
+    <label>🎧 Ambient sound</label>
+    <div class="ambient-row">
+      <select id="ambientSoundSelect" class="picker">
+        <option value="off">Off</option>
+        <option value="rain">Rain</option>
+        <option value="white">White noise</option>
+        <option value="pink">Pink noise</option>
+        <option value="brown">Brown noise</option>
+        <option value="binaural-delta">Binaural beats · Delta (2 Hz)</option>
+        <option value="binaural-theta">Binaural beats · Theta (6 Hz)</option>
+        <option value="binaural-alpha">Binaural beats · Alpha (10 Hz)</option>
+        <option value="binaural-beta">Binaural beats · Beta (18 Hz)</option>
+        <option value="binaural-gamma">Binaural beats · Gamma (40 Hz)</option>
+        <option value="om">OM-inspired tone (136.1 Hz)</option>
+        <option value="tone-528">528 Hz tone</option>
+      </select>
+      <input type="range" id="ambientVolume" min="5" max="100" value="40" title="Volume" />
+    </div>
+    <div class="ambient-help" style="font-size:11px;opacity:.78;margin-top:6px;line-height:1.45">Binaural beats use separate left/right tones; stereo headphones are needed to hear the beat effect. These are sound options, not proven treatments. Keep volume comfortable.</div>
+    <label class="ambient-only-label"><input type="checkbox" id="ambientOnlyStudy" /> Only while a study session is running</label>
+  </div>
+
+  <div class="pomo-wrap">
+    <svg class="pomo-ring" viewBox="0 0 120 120">
+      <circle class="ring-bg" cx="60" cy="60" r="54"/>
+      <circle id="ringProgress" class="ring-fg" cx="60" cy="60" r="54"
+        stroke-dasharray="339.3" stroke-dashoffset="0"/>
+    </svg>
+    <div class="pomo-center">
+      <div id="pomoLabel" class="pomo-label">STUDY</div>
+      <div id="pomoTime"  class="pomo-time">25:00</div>
+    </div>
+  </div>
+
+  <div class="pomo-controls">
+    <button id="pomoStart" class="btn btn-primary">▶ Start</button>
+    <button id="subjectCycleBtn" class="btn btn-ghost" title="Tap to cycle subject">📚 None</button>
+    <button id="pomoReset" class="btn btn-ghost">↺ Reset</button>
+  </div>
+  <div id="pomoStatus" class="pomo-status"></div>
+
+  <p class="pomo-history-title">Session History</p>
+  <div id="pomoHistory" class="pomo-history">
+    <div class="empty-state">No sessions yet today.</div>
+  </div>
+
+  <!-- Time Stats -->
+  <div class="pomo-stats-row">
+    <div class="pomo-stat-box">
+      <div class="pomo-stat-label">Total</div>
+      <div id="pomoStatTotal" class="pomo-stat-val">0s</div>
+    </div>
+    <div class="pomo-stat-box">
+      <div class="pomo-stat-label">Yesterday</div>
+      <div id="pomoStatYesterday" class="pomo-stat-val">0s</div>
+    </div>
+    <div class="pomo-stat-box">
+      <div class="pomo-stat-label">Today</div>
+      <div id="pomoStatToday" class="pomo-stat-val">0s</div>
+    </div>
+  </div>
+
+  <!-- Subjects -->
+  <p class="section-title" style="margin-top:14px">Subjects</p>
+  <div class="block-input-row">
+    <input id="subjectInput" class="text-input" placeholder="Subject name (e.g. Physics)" />
+    <button id="addSubjectBtn" class="btn btn-primary">+ Add</button>
+  </div>
+  <div id="subjectChips" class="subject-chips"></div>
+  <div id="subjectList" class="subject-list"></div>
+  <button id="subjectGraphToggle" class="btn btn-ghost" style="width:100%;margin-top:6px">📊 Subject Graph (7-day)</button>
+  <canvas id="subjectGraph" width="362" height="110" style="display:none;margin-top:8px"></canvas>
+  <div id="subjectGraphLegend" class="subject-graph-legend"></div>
+
+  <button id="journalToggle" class="btn btn-ghost" style="width:100%;margin-top:14px">📓 Distraction journal</button>
+  <div id="journalPanel" class="journal-panel" style="display:none">
+    <div id="journalSummary" class="journal-summary"></div>
+    <div id="journalList" class="journal-list"></div>
+    <button id="journalClear" class="btn btn-danger" style="width:100%;margin-top:6px">Clear journal</button>
+  </div>
+
+  <!-- Focus Timetable (auto-block lock) -->
+  <p class="section-title" style="margin-top:14px">Focus Timetable (auto-lock)</p>
+  <div class="timetable-time-row">
+    <input type="time" id="ttStart" class="pomo-dur-input" />
+    <span class="tt-to-label">to</span>
+    <input type="time" id="ttEnd" class="pomo-dur-input" />
+  </div>
+  <input id="ttSitesInput" class="text-input" placeholder="Study sites allowed, comma separated (e.g. youtube.com, docs.google.com)" style="margin-top:6px" />
+  <button id="addTimetableBtn" class="btn btn-danger" style="width:100%;margin-top:6px">🔒 Lock This Schedule</button>
+  <div id="ttLockedMsg" class="tt-locked-msg" style="display:none">🔒 A schedule is currently active — locked until it ends.</div>
+  <div id="timetableList" class="timetable-list"></div>
+
+  <!-- Auto-track subject time by website -->
+  <p class="section-title" style="margin-top:14px">Auto-track by Website</p>
+  <div class="block-input-row">
+    <input id="siteSubjectDomainInput" class="text-input" placeholder="e.g. khanacademy.org" />
+    <select id="siteSubjectSelect" class="picker"></select>
+  </div>
+  <button id="addSiteSubjectBtn" class="btn btn-primary" style="width:100%;margin-top:6px">+ Link Site to Subject</button>
+  <div id="siteSubjectList" style="margin-top:8px"></div>
+
+</section>
+
+<!-- ===== NOTES TAB ===== -->
+<section class="tab-content" id="tab-notes">
+  <div class="notes-header">
+    <p class="section-title">Quick Notes</p>
+    <span id="notesSaved" class="saved-badge">Saved ✓</span>
+  </div>
+  <textarea id="notesArea" class="notes-area" placeholder="Type here… auto-saves as draft. You can also paste (Ctrl+V) a photo directly in here."></textarea>
+  <div id="notePendingImages" class="note-images-preview"></div>
+  <input type="file" id="notePhotoInput" accept="image/*" multiple style="display:none" />
+  <div class="notes-btn-row">
+    <button id="addPhotoBtn" class="btn btn-ghost">📷 Add Photo</button>
+    <button id="saveNoteBtn" class="btn btn-primary" style="flex:1">💾 Save Note to History</button>
+    <button id="cancelEditBtn" class="btn btn-ghost" style="display:none">Cancel</button>
+  </div>
+
+  <p class="section-title" style="margin-top:14px">History</p>
+  <div id="notesHistoryList" class="notes-history-list"></div>
+  <div id="notesHistoryEmpty" class="empty-state" style="display:none">No saved notes yet.</div>
+</section>
+
+<!-- ===== TASKS TAB ===== -->
+<section class="tab-content" id="tab-tasks">
+  <div class="tasks-header">
+    <p class="section-title">Tasks</p>
+    <div id="tasksBlockStatus" class="tasks-block-status tasks-blocked">
+      📝 0 Pending
+    </div>
+  </div>
+  <div class="task-hint" id="taskHint">Your to-do list. Doesn't affect site blocking.</div>
+  <div class="block-input-row">
+    <input id="taskInput" class="text-input" placeholder="Add a task…" />
+    <button id="addTaskBtn" class="btn btn-primary">+ Add</button>
+  </div>
+  <button id="taskBulkToggle" class="btn btn-ghost" style="width:100%;margin-top:2px">📋 Paste a list</button>
+  <div id="taskBulkBox" class="task-bulk-box" style="display:none">
+    <textarea id="taskBulkInput" class="text-input" rows="5" placeholder="One task per line…"></textarea>
+    <button id="taskBulkAddBtn" class="btn btn-primary" style="width:100%">Add all</button>
+  </div>
+  <button id="taskUpcomingToggle" class="btn btn-ghost" style="width:100%;margin-top:2px">📅 Upcoming Tasks</button>
+  <ul id="taskList" class="task-list"></ul>
+  <div id="taskEmpty" class="empty-state" style="display:none">No tasks. Sites are unblocked! 🎉</div>
+
+  <button id="assignToggle" class="btn btn-ghost" style="width:100%;margin-top:10px">🎓 Assignments &amp; deadlines</button>
+  <div id="assignPanel" class="assign-panel" style="display:none">
+    <input id="assignName" class="text-input" placeholder="Assignment / quiz name" />
+    <div class="assign-row">
+      <input id="assignCourse" class="text-input" placeholder="Course (optional)" />
+      <input id="assignWeight" class="text-input assign-weight" type="number" min="0" max="100" placeholder="Weight %" />
+    </div>
+    <input id="assignDue" class="text-input" type="datetime-local" />
+    <button id="assignAddBtn" class="btn btn-primary" style="width:100%">+ Add deadline</button>
+    <div id="assignList" class="assign-list"></div>
+  </div>
+</section>
+
+<!-- ===== HABITS TAB ===== -->
+<section class="tab-content" id="tab-habits">
+  <p class="section-title">Habits</p>
+
+  <input id="habitNameInput" class="text-input" placeholder="Habit name (e.g. Meditation)" />
+  <div class="habit-add-row">
+    <select id="habitTypeInput" class="picker habit-type-select">
+      <option value="check">Check-off</option>
+      <option value="numeric">Numeric</option>
+    </select>
+    <input id="habitUnitInput" class="text-input habit-unit-input" placeholder="Unit (reps)" style="display:none" />
+    <button id="addHabitBtn" class="btn btn-primary">+ Add</button>
+  </div>
+
+  <div id="habitList" class="habit-list"></div>
+  <div id="habitEmpty" class="empty-state" style="display:none">No habits yet. Add one above!</div>
+
+  <button id="habitHistoryToggle" class="btn btn-ghost" style="width:100%">📜 History</button>
+  <div id="habitHistorySection" class="habit-history-section" style="display:none">
+    <div id="habitHistoryList" class="habit-history-list"></div>
+    <div id="habitHistoryEmpty" class="empty-state" style="display:none">No habit history yet.</div>
+  </div>
+
+  <button id="habitHeatmapBtn" class="btn btn-ghost" style="width:100%;margin-top:8px">🗓 Heatmap</button>
+  <div id="habitHeatmapPanel" class="habit-heatmap-panel" style="display:none">
+    <div id="habitHeatmapGrid" class="habit-heatmap-grid"></div>
+    <div class="habit-heatmap-legend"><span>Less</span><i class="hm-l0"></i><i class="hm-l1"></i><i class="hm-l2"></i><i class="hm-l3"></i><i class="hm-l4"></i><span>More</span></div>
+  </div>
+
+  <button id="habitsAnalyseBtn" class="btn btn-ghost" style="width:100%;margin-top:8px">📊 Analyse</button>
+  <div id="habitsAnalysePanel" style="display:none;margin-top:6px">
+    <div class="settings-row">
+      <label>Range</label>
+      <select id="analyseRangeSelect" class="picker">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="all">All time</option>
+      </select>
+    </div>
+    <div id="analyseSummary" class="analyse-summary"></div>
+    <canvas id="analyseGraph" class="habit-graph-canvas"></canvas>
+
+    <p class="section-title" style="margin-top:12px">📏 Body Metrics</p>
+    <div class="settings-row">
+      <input type="number" id="bodyHeightInput" class="pomo-dur-input" placeholder="Height (cm)" step="0.1" />
+      <input type="number" id="bodyWeightInput" class="pomo-dur-input" placeholder="Weight (kg)" step="0.1" />
+      <button id="bodyMetricSaveBtn" class="btn btn-primary" style="white-space:nowrap">Log today</button>
+    </div>
+    <canvas id="bodyMetricGraph" class="habit-graph-canvas"></canvas>
+    <div id="bodyMetricSummary" class="analyse-summary"></div>
+
+    <p class="section-title" style="margin-top:12px">🕐 Browser Activity</p>
+    <div id="browserSessionSummary" class="analyse-summary"></div>
+  </div>
+</section>
+
+  </div><!-- /appScroll -->
+</div><!-- /appShell -->
+
+<!-- SETTINGS OVERLAY -->
+<div id="settingsOverlay" class="settings-overlay" style="display:none">
+  <div class="settings-panel">
+    <div class="settings-panel-header">
+      <span>⚙️ Appearance</span>
+      <button id="closeSettingsBtn" class="settings-close-btn">✕</button>
+    </div>
+    <div class="settings-panel-body">
+
+      <div class="settings-row">
+        <label>UI Style</label>
+        <div class="ui-style-row">
+          <div id="settingsUiStyleSwatch" class="ui-style-swatch" title="Current accent color"></div>
+          <select id="settingsUiStyleSelect" class="picker">
+            <option value="glass">Glass — frosted, translucent panels</option>
+            <option value="solid">Solid — flat, opaque cards + shadow</option>
+            <option value="terminal">Terminal — retro CRT, green monospace</option>
+            <option value="amber">Amber — retro CRT, amber monospace</option>
+            <option value="neumorphic">Neumorphic — soft embossed panels</option>
+            <option value="neon">Neon — vibrant glow, big blur</option>
+            <option value="cyberpunk">Cyberpunk — magenta + cyan, sharp</option>
+            <option value="monochrome">Monochrome — pure grayscale</option>
+            <option value="sunset">Sunset — warm orange/coral glow</option>
+            <option value="ocean">Ocean — cool teal/blue, calm</option>
+            <option value="forest">Forest — earthy green accent</option>
+            <option value="royal">Royal — gold accent, purple tint</option>
+            <option value="midnight">Midnight — deep indigo, low-key</option>
+            <option value="pastel">Pastel — soft lavender, airy</option>
+            <option value="paper">Paper — cream cards, serif font</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <label>Font</label>
+        <select id="settingsFontSelect" class="picker">
+          <option value="">Default</option>
+          <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="Verdana, sans-serif">Verdana</option>
+          <option value="'Courier New', monospace">Courier New</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+          <option value="__custom__" id="customFontOption" style="display:none">📁 Uploaded font</option>
+          <option value="__typed__">✏️ Type a font name…</option>
+        </select>
+      </div>
+
+      <div class="settings-row settings-row-inline">
+        <label>🌐 Also apply a font to websites you browse (not just this popup)</label>
+        <input type="checkbox" id="settingsApplyFontToSites" />
+      </div>
+
+      <div class="settings-row" id="settingsWebsiteFontRow" style="display:none">
+        <label>Website font (independent from the extension's own font above)</label>
+        <select id="settingsWebsiteFontSelect" class="picker">
+          <option value="">Same as extension font</option>
+          <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="Verdana, sans-serif">Verdana</option>
+          <option value="'Courier New', monospace">Courier New</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+          <option value="__custom__" id="customWebsiteFontOption" style="display:none">📁 Uploaded font (same file as above)</option>
+          <option value="__typed__">✏️ Type a font name…</option>
+        </select>
+      </div>
+      <div class="settings-row" id="settingsWebsiteFontTypedRow" style="display:none">
+        <label>Website font name</label>
+        <input type="text" id="settingsWebsiteFontTypedInput" class="text-input" placeholder="e.g. Poppins, Fira Code, Segoe UI" />
+      </div>
+
+      <div class="settings-row" id="settingsFontTypedRow" style="display:none">
+        <label>Font name (must already be on your system, or a web-safe/Google Font name)</label>
+        <input type="text" id="settingsFontTypedInput" class="text-input" placeholder="e.g. Poppins, Fira Code, Segoe UI" />
+      </div>
+
+      <div class="settings-row">
+        <label>Upload a font file (.ttf / .otf / .woff / .woff2)</label>
+        <input type="file" id="settingsFontUpload" accept=".ttf,.otf,.woff,.woff2" />
+        <div id="customFontName" class="settings-file-name"></div>
+      </div>
+
+      <div class="settings-row settings-row-inline">
+        <label>Accent color</label>
+        <input type="color" id="settingsAccentColor" />
+      </div>
+
+      <div class="settings-row settings-row-inline">
+        <label>Text color</label>
+        <input type="color" id="settingsTextColor" />
+      </div>
+
+      <div class="settings-row settings-row-inline">
+        <label>Background color</label>
+        <input type="color" id="settingsBgColor" />
+      </div>
+
+      <div class="settings-row">
+        <label>Background — photo, GIF, or video</label>
+        <input type="file" id="settingsBgImageUpload" accept="image/*,video/mp4,video/webm" />
+        <div id="bgImageName" class="settings-file-name"></div>
+        <button id="removeBgImageBtn" class="btn btn-ghost" style="display:none;width:100%;margin-top:6px">Remove Background</button>
+      </div>
+
+      <div class="settings-row" id="settingsBgFitRow" style="display:none">
+        <label>Background fit</label>
+        <select id="settingsBgFit" class="picker">
+          <option value="cover">Cover (fill popup, may crop)</option>
+          <option value="contain">Contain (show whole image)</option>
+          <option value="stretch">Stretch (fill exactly)</option>
+        </select>
+      </div>
+
+      <div class="settings-row settings-row-inline" id="settingsMuteRow" style="display:none">
+        <label>Mute background video</label>
+        <input type="checkbox" id="settingsBgVideoMute" />
+      </div>
+
+      <div class="settings-row" id="settingsBlurRow" style="display:none">
+        <label>Background image blur (<span id="settingsBlurVal">6</span>px) — softens the photo itself</label>
+        <input type="range" id="settingsBlurRange" min="0" max="20" value="6" class="settings-slider" />
+      </div>
+
+      <div class="settings-row">
+        <label>Glass panel blur (<span id="settingsPanelBlurVal">18</span>px) — how frosted the cards look</label>
+        <input type="range" id="settingsPanelBlurRange" min="0" max="30" value="18" class="settings-slider" />
+      </div>
+
+      <div class="settings-row">
+        <label>Panel opacity (<span id="settingsPanelAlphaVal">50</span>%) — lower it so the background shows through more</label>
+        <input type="range" id="settingsPanelAlphaRange" min="0" max="100" value="50" class="settings-slider" />
+      </div>
+
+      <div class="settings-row">
+        <label>Panel border strength (<span id="settingsBorderStrengthVal">25</span>%) — raise it so edges don't blend into the image</label>
+        <input type="range" id="settingsBorderStrengthRange" min="0" max="100" value="25" class="settings-slider" />
+      </div>
+      <div class="settings-row">
+        <label>Panel border color</label>
+        <div class="color-input-row">
+          <span class="color-swatch-preview" id="settingsBorderColorSwatch" style="background:#ffffff"></span>
+          <input type="text" id="settingsBorderColor" class="color-hex-input" value="#ffffff" maxlength="7" placeholder="#rrggbb" />
+        </div>
+      </div>
+
+      <div class="settings-row" style="margin-top:6px">
+        <label style="font-size:12px">Per-section font &amp; color — give each tab its own look. Leave on "Default" to just follow the global Font/Text color above.</label>
+      </div>
+
+      <div class="per-area-list" id="perAreaList">
+        <!-- rows injected by popup.js, one per tab: track/block/speed/pomo/notes/tasks/habits -->
+      </div>
+
+      <div class="settings-row settings-row-inline" style="margin-top:10px">
+        <label>👁️ Eye-rest reminders (20-20-20 rule, every 20 min)</label>
+        <input type="checkbox" id="eyeRestToggle" />
+      </div>
+
+      <p class="section-title" style="margin-top:16px">💾 Backup & Restore</p>
+      <button id="exportDataBtn" class="btn btn-primary" style="width:100%">📤 Export all data</button>
+      <input type="file" id="importDataFile" accept="application/json" style="display:none" />
+      <label for="importMode" class="block-hint" style="display:block;margin-top:8px">Import mode</label>
+      <select id="importMode" class="picker" style="width:100%;margin-top:4px">
+        <option value="merge" selected>Safe merge — keep current data</option>
+        <option value="replace">Replace all backed-up data (destructive)</option>
+      </select>
+      <button id="importDataBtn" class="btn btn-ghost" style="width:100%;margin-top:6px">📥 Import from a backup file</button>
+      <p class="block-hint" id="importStatus" style="margin-top:4px">Safe merge is selected by default. Export a backup before replacing data.</p>
+
+      <button id="resetSettingsBtn" class="btn btn-danger" style="width:100%;margin-top:12px">Reset to Default</button>
+
+      <div class="settings-row settings-row-inline">
+        <label>🗂 Show ARUN dashboard on new tabs</label>
+        <input type="checkbox" id="settingsNewTabDash" />
+      </div>
+
+      <div class="settings-footer">
+        <button id="feedbackBtn" class="feedback-btn" title="Send feedback">✉️ Feedback</button>
+        <span class="settings-credit">Created by Arun</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Full HSV color wheel — pops up when any color swatch is clicked.
+     Reused for every color field in the app (Skin tab, picked elements,
+     groups) rather than one per field. -->
+<div id="colorWheelPopover" class="color-wheel-popover" style="display:none">
+  <div class="color-wheel-sv" id="colorWheelSV">
+    <div class="color-wheel-sv-cursor" id="colorWheelSVCursor"></div>
+  </div>
+  <div class="color-wheel-hue" id="colorWheelHue">
+    <div class="color-wheel-hue-cursor" id="colorWheelHueCursor"></div>
+  </div>
+  <div class="color-wheel-row">
+    <div class="color-wheel-preview" id="colorWheelPreview"></div>
+    <input type="text" id="colorWheelHexOut" class="color-hex-input" maxlength="7" placeholder="#rrggbb" />
+  </div>
+  <button type="button" id="colorWheelDone" class="btn btn-primary" style="width:100%;margin-top:6px">Done</button>
+</div>
+
+<!-- Undo toast — shown for ~5s after deleting a task/habit/note, reused
+     across all three via showUndoToast() in popup.js. Pure UI convenience;
+     the delete itself already happened, this just offers to reverse it. -->
+<div id="undoToast" class="undo-toast" style="display:none">
+  <span id="undoToastMsg" class="undo-toast-msg"></span>
+  <button id="undoToastBtn" class="undo-toast-btn">Undo</button>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

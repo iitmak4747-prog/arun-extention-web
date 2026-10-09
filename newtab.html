@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>New Tab</title>
+  <link rel="stylesheet" href="newtab.css" />
+</head>
+<body>
+  <main class="nt-wrap">
+    <header class="nt-head">
+      <div class="nt-brand"><span class="nt-brand-mark">A</span><span>ARUN <b>PRO</b></span><span class="nt-live">YOUR FOCUS SPACE</span></div>
+      <div>
+        <div id="ntClock" class="nt-clock">--:--</div>
+        <div id="ntGreeting" class="nt-greeting"></div>
+      </div>
+      <div id="ntPomo" class="nt-pomo"></div>
+    </header>
+
+    <div id="blockedRedirectNotice" class="blocked-redirect-notice" role="status" hidden>
+      <div class="blocked-notice-icon">↗</div>
+      <div class="blocked-notice-copy"><strong>Distraction paused. Your progress is still here.</strong><span id="blockedRedirectText">ARUN PRO opened your study analytics instead of the blocked site.</span></div>
+      <button id="blockedNoticeDismiss" type="button" aria-label="Dismiss notice">×</button>
+    </div>
+    <div id="ntGoal" class="nt-goal" style="display:none"></div>
+
+      <section class="dedicated-analytics" id="analyticsDashboard" aria-labelledby="analyticsMainTitle">
+        <div class="analytics-main-heading"><div><span class="suite-eyebrow">ARUN PRO / ANALYTICS</span><h2 id="analyticsMainTitle">Your productivity, deeply analysed</h2><p>Explore recorded focus time, consistency, task completion, habits and logged website activity — with explanations for every chart.</p></div><span class="analytics-live-mark">● LOCAL DATA</span></div>
+        <div class="feature-pane analytics-home-pane" id="pane-analytics">
+        <div class="suite-hero"><div><span class="suite-eyebrow">ANALYTICS CENTER / LOCAL DATA</span><h3>Performance overview</h3><p class="feature-muted">A clear view of recorded focus, study trends and completion. Only saved records are counted; missing data stays unavailable.</p></div><div class="suite-orb analytics-orb" aria-hidden="true"><span>↗</span><small>INSIGHTS</small></div></div>
+        <div class="analytics-period-row"><label for="analyticsPeriod">Report period</label><select id="analyticsPeriod" class="analytics-period"><option value="daily">Daily · today</option><option value="weekly" selected>Weekly · 7 days</option><option value="monthly">Monthly · choose month &amp; year</option><option value="yearly">Yearly · choose year</option><option value="alltime">All time · every saved record</option></select><label id="analyticsMonthLabel" for="analyticsMonth" hidden>Month / year</label><input id="analyticsMonth" class="analytics-period" type="month" aria-label="Choose report month and year" hidden /><label id="analyticsYearLabel" for="analyticsYear" hidden>Year</label><select id="analyticsYear" class="analytics-period" aria-label="Choose report year" hidden></select><span id="analyticsCoverage" class="feature-muted">Only saved records are counted.</span></div><div id="deepAnalyticsCards" class="deep-kpis"></div>
+        <div class="analytics-insight-grid" aria-label="Additional study insights">
+          <article class="suite-tile analytics-insight-card" id="bestStudyHoursCard">
+            <h4>⌚ Best study hours</h4>
+            <p class="analytics-help">Uses newly collected per-hour website time. Older daily totals do not contain hours, so they are not guessed. Study/Waste labels follow the popup's current site categories.</p>
+            <div id="bestStudyHours" class="analytics-insight-content"><div class="analytics-no-data">Loading saved hourly records…</div></div>
+          </article>
+          <article class="suite-tile analytics-insight-card" id="weekCompareCard">
+            <h4>↔ Last 7 days vs previous 7 days</h4>
+            <p class="analytics-help">Compares recorded website Study and Waste time for two consecutive seven-day windows. It does not combine Pomodoro time or treat missing records as activity.</p>
+            <div id="weekCompare" class="analytics-insight-content"><div class="analytics-no-data">Loading comparison…</div></div>
+          </article>
+          <article class="suite-tile analytics-insight-card analytics-insight-wide" id="monthlyCalendarCard">
+            <div class="analytics-insight-title-row"><div><h4>▦ Monthly study calendar</h4><p class="analytics-help">Choose any saved month. Each day shows the Study/Waste split for that date; select a day for exact time, ratio and recorded-data coverage.</p></div><div class="month-calendar-controls"><button type="button" id="monthCalPrev" class="diary-btn secondary" aria-label="Previous month">‹</button><input id="monthCalMonth" type="month" aria-label="Choose month and year"><button type="button" id="monthCalNext" class="diary-btn secondary" aria-label="Next month">›</button></div></div>
+            <div id="monthCalSummary" class="month-cal-summary"></div>
+            <div class="month-cal-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+            <div id="monthCalGrid" class="month-cal-grid" role="grid" aria-label="Monthly study and waste calendar"></div>
+            <div class="month-cal-legend"><span><i class="month-study-swatch"></i>Study</span><span><i class="month-waste-swatch"></i>Waste</span><span>Bar split = relative share; bar length = daily recorded total</span></div>
+            <div id="monthCalDetail" class="month-cal-detail" aria-live="polite">Select a date to inspect its recorded data.</div>
+          </article>
+        </div>
+        <div class="deep-grid">
+          <article class="suite-tile analytics-summary-card"><h4 id="deepTrendTitle"><span class="analytics-card-icon">⌁</span> Study activity trend</h4><p class="analytics-help">Meaning: each column is a saved calendar day (or month in yearly/all-time views). Teal = website time classified as Study; amber = Waste. A dash means no saved website entry, not proof of zero activity. Hover a column for its full date and exact totals.</p><div id="deepStudyTrend" class="analytics-chart-shell"></div></article>
+          <article class="suite-tile analytics-summary-card"><h4><span class="analytics-card-icon">✓</span> Task & habit completion</h4><p class="analytics-help">Meaning: Tasks is the share of currently saved tasks marked complete. Habits counts only explicit check-ins today. The cycle bar counts completed Pomodoro study phases in the selected period; its 8-cycle reference is visual, not a target.</p><div id="deepCompletion" class="deep-bars"></div></article>
+          <article class="suite-tile analytics-summary-card"><h4><span class="analytics-card-icon">◷</span> Focus session quality</h4><p class="analytics-help">Meaning: these are separate sources, not one combined total. Website Study/Waste comes from popup tracking, Pomodoro time comes from saved elapsed seconds, and manual logs are listed separately to prevent double-counting.</p><div id="deepFocus" class="suite-list"></div></article>
+          <article class="suite-tile analytics-summary-card"><h4><span class="analytics-card-icon">▤</span> Subject breakdown</h4><p class="analytics-help">Meaning: time grouped by a saved subject ID and label. Only records in subjectTime for this report range contribute; unlabelled time is not guessed or assigned to a subject.</p><div id="deepSubjects" class="suite-list"></div></article>
+          <article class="suite-tile analytics-summary-card"><h4><span class="analytics-card-icon">⌃</span> Peak website study day</h4><p class="analytics-help">Meaning: the calendar day with the largest website time explicitly classified as Study in this report. It is not total Pomodoro time and it does not infer productivity outside tracked records.</p><div id="deepPeak" class="suite-list"></div></article>
+          <article class="suite-tile analytics-summary-card"><h4><span class="analytics-card-icon">◎</span> Data quality & recommendations</h4><p class="analytics-help">Meaning: counts show which saved data sources are available to this report. Missing history is marked unavailable; it is not fabricated or treated as missed effort.</p><div id="deepHealth" class="suite-list"></div></article>
+        </div>
+        <section class="analytics-detail-intro"><div><span class="suite-eyebrow">READ THE SIGNALS</span><h4>What your data is telling you</h4><p>Charts below are calculated only from records actually stored by ARUN PRO. A blank period means no matching records were found—not zero effort and not estimated activity.</p></div></section>
+        <div class="analytics-detail-grid">
+          <article class="suite-tile analytics-detail-card"><h4>🌐 Logged website activity</h4><p class="analytics-explain">Productive and distraction entries that were explicitly recorded. This is not a scan of your browser history.</p><div id="deepUsageBreakdown" class="analytics-viz"></div><div id="deepUsageExplain" class="analytics-caption"></div></article>
+          <article class="suite-tile analytics-detail-card"><h4>📆 Study / waste comparison</h4><p class="analytics-explain">Compare both recorded website-study and waste time across the selected period. Unrecorded periods are marked separately.</p><div id="deepDayComparison" class="analytics-viz"></div><div id="deepDayExplain" class="analytics-caption"></div></article>
+          <article class="suite-tile analytics-detail-card"><h4>🎯 Session duration profile</h4><p class="analytics-explain">Distribution of saved study sessions by duration, using recorded duration fields only.</p><div id="deepSessionProfile" class="analytics-viz"></div><div id="deepSessionExplain" class="analytics-caption"></div></article>
+          <article class="suite-tile analytics-detail-card"><h4>📚 Where study time went</h4><p class="analytics-explain">Subject/topic totals from saved labels. Unlabelled sessions are not assigned to a guessed subject.</p><div id="deepSubjectChart" class="analytics-viz"></div><div id="deepSubjectExplain" class="analytics-caption"></div></article>
+          <article class="suite-tile analytics-detail-card analytics-wide"><h4>🧭 Detailed report & interpretation</h4><div id="deepNarrative" class="analytics-narrative"></div></article>
+          
+        </div>
+        <div class="suite-bottom"><button id="deepExportCsv" class="diary-btn secondary" type="button">Export analytics CSV</button><button id="deepRefresh" class="diary-btn" type="button">Refresh analytics</button></div>
+        </div>
+      </section>
+
+    <div class="nt-stats" id="ntStats">
+      <div class="nt-stat"><span class="stat-icon">✓</span><div><small>TASKS COMPLETED</small><strong id="statTasks">—</strong></div></div>
+      <div class="nt-stat"><span class="stat-icon">✦</span><div><small>HABITS TODAY</small><strong id="statHabits">—</strong></div></div>
+      <div class="nt-stat"><span class="stat-icon">◷</span><div><small>UPCOMING DEADLINES</small><strong id="statDeadlines">—</strong></div></div>
+    </div>
+
+    <div class="nt-grid">
+      <section class="nt-card">
+        <h2>Today's tasks</h2>
+        <div id="ntTasks"></div>
+      </section>
+      <section class="nt-card">
+        <h2>Habits</h2>
+        <div id="ntHabits"></div>
+      </section>
+      <section class="nt-card nt-wide">
+        <h2>Upcoming deadlines</h2>
+        <div id="ntAssign"></div>
+      </section>
+      <section class="nt-card nt-wide"><h2>📈 Productivity insights</h2><div id="ntAnalytics" class="nt-analytics"></div></section>
+    </div>
+
+    <section class="nt-diary" id="diaryPanel" hidden>
+      <div class="diary-top"><div><h2>🔒 Private Diary</h2><p id="diarySubtitle">Your personal space, just for you.</p></div><button class="diary-close" id="diaryClose" aria-label="Close diary">×</button></div>
+      <div id="diaryLock" class="diary-lock"><div class="lock-symbol">🔐</div><h3>Diary is locked</h3><p>Enter your password to open your private diary.</p><form id="diaryUnlockForm"><input id="diaryPassword" type="password" autocomplete="current-password" placeholder="Enter diary password" aria-label="Diary password" required><button class="diary-btn" type="submit">Unlock diary</button></form><div id="diaryError" class="diary-error" role="alert"></div><small class="diary-security-note">This is a simple access lock, not encryption. Do not store highly sensitive information here.</small></div>
+      <div id="diaryEditor" hidden>
+<div class="people-journal-priority-note"><strong>🤝 People & Interaction Journal</strong><span>First: log each person and every meeting separately. Your records and analytics are saved locally.</span></div>
+<section class="people-journal" aria-labelledby="peopleJournalTitle"><div class="people-journal-head"><div><h3 id="peopleJournalTitle">🤝 People & Interaction Journal</h3><p>Har person aur har meeting ka alag dated record: kisne approach kiya, dono ko kya chahiye tha, kis topic par baat hui, aapne kya notice kiya, aur follow-up kya hai.</p></div><span class="people-private-tag">LOCAL ONLY</span></div><div class="people-form-grid"><input id="personName" maxlength="100" placeholder="Person name / nickname *" aria-label="Person name" required><input id="personDate" type="date" aria-label="Meeting date"><input id="personPlace" maxlength="120" placeholder="Where / context (optional)" aria-label="Meeting place"><select id="personInitiated" aria-label="Who initiated"><option value="me">Who approached? — Me</option><option value="them">Who approached? — Them</option><option value="mutual">Mutual / group</option></select><input id="personWanted" maxlength="1000" placeholder="What did they want from you?" aria-label="What they wanted"><input id="myWanted" maxlength="1000" placeholder="What did I want from them?" aria-label="What I wanted"><input id="personTopics" maxlength="500" placeholder="Topics discussed (comma separated)" aria-label="Topics discussed"><textarea id="personNoticed" maxlength="3000" placeholder="What did I notice? Facts, behaviour, mood, useful details…" aria-label="What I noticed"></textarea><textarea id="personOutcome" maxlength="1500" placeholder="Outcome / follow-up / next step (optional)" aria-label="Outcome and follow-up"></textarea></div><div class="people-form-actions"><button id="personReset" class="diary-btn secondary" type="button">Clear form</button><button id="personSave" class="diary-btn" type="button">Save interaction</button><span id="personSaveStatus" role="status">Each meeting is saved separately.</span></div><div class="people-analytics" id="peopleAnalytics"></div><div class="people-records-head"><h4>People & meeting history</h4><input id="peopleSearch" class="diary-search" placeholder="Search people, topics, notes…" aria-label="Search people journal"></div><div id="peopleRecords" class="people-records"></div><div class="people-export-row"><button id="peopleExport" class="diary-btn secondary" type="button">Export interaction data</button><span id="peopleRecordCount"></span></div></section>
+<div class="diary-toolbar"><input id="diaryTitle" maxlength="100" placeholder="Entry title (optional)" aria-label="Diary entry title"><select id="diaryMood" aria-label="Mood"><option value="🙂">🙂 Good</option><option value="😌">😌 Calm</option><option value="😐">😐 Okay</option><option value="😟">😟 Stressed</option><option value="😢">😢 Low</option></select><input id="diaryTags" maxlength="200" placeholder="Tags (comma separated)" aria-label="Diary tags"><button id="diaryNew" class="diary-btn secondary" type="button">+ New entry</button></div><textarea id="diaryBody" maxlength="30000" placeholder="What’s on your mind today? Write freely…" aria-label="Diary entry"></textarea><div class="diary-save-row"><span id="diarySaveStatus">Saved on this device</span><div><button id="diaryDelete" class="diary-btn danger" type="button">Delete entry</button> <button id="diarySave" class="diary-btn" type="button">Save entry</button></div></div><h3 class="diary-entries-heading">Previous entries</h3><input id="diarySearch" class="diary-search" placeholder="Search entries…" aria-label="Search diary entries"><div id="diaryEntries" class="diary-entries"></div><div class="diary-export-row"><button id="diaryExport" class="diary-btn secondary" type="button">Export diary backup</button><button id="diaryLockAgain" class="nt-link" type="button">Lock diary</button></div></div>
+    </section>
+
+    <section class="nt-card nt-wide feature-center" id="featureCenter">
+      <div class="feature-heading"><div><h2>OTHER OPTIONS & TOOLS</h2><p>Analytics stays at the top. Open any tool below when you need it — study, organize, customize or protect your data.</p></div><input id="globalSearch" class="feature-input" placeholder="Search tasks, notes, flashcards, exams…" aria-label="Search all tools"></div>
+      <div class="feature-nav" role="tablist" aria-label="Advanced tools">
+        <button class="feature-tab active" data-feature="exams">🎓 Exams</button><button class="feature-tab" data-feature="vault">📚 Knowledge Vault</button><button class="feature-tab" data-feature="cards">🧠 Flashcards</button><button class="feature-tab" data-feature="usage">📊 Usage & Focus</button><button class="feature-tab" data-feature="habits">📈 Study Heatmap</button><button class="feature-tab" data-feature="review">🌙 Daily Review</button><button class="feature-tab" data-feature="settings">⚙️ Customize</button><button class="feature-tab" data-feature="safety">🛡️ Data Safety</button><button class="feature-tab" data-feature="suite">🚀 Pro Suite</button>
+      </div>
+      <div id="featureSearchResults" class="feature-results" hidden></div>
+      <div class="feature-pane" id="pane-exams">
+        <h3>Exam countdown & syllabus tracker</h3>
+        <form id="examForm" class="feature-form"><input id="examName" required maxlength="100" placeholder="Exam / subject name"><input id="examDate" required type="date" aria-label="Exam date"><input id="examTopics" maxlength="500" placeholder="Syllabus topics (comma separated)"><button class="diary-btn">Add exam</button></form><div id="examList" class="feature-list"></div>
+      </div>
+      <div class="feature-pane" id="pane-vault" hidden>
+        <h3>Knowledge Vault & quick capture</h3>
+        <form id="vaultForm" class="feature-form"><input id="vaultTitle" required maxlength="120" placeholder="Title / resource"><select id="vaultType"><option>Note</option><option>Link</option><option>Code snippet</option><option>Idea</option></select><input id="vaultTags" maxlength="200" placeholder="Tags, comma separated"><button class="diary-btn">Save</button><textarea id="vaultBody" class="feature-textarea" maxlength="20000" placeholder="Write notes, paste a URL or save a code snippet…"></textarea></form><div class="feature-inline"><button id="capturePage" class="diary-btn secondary" type="button">Capture current page title + URL</button><button id="vaultExport" class="diary-btn secondary" type="button">Export vault</button></div><div id="vaultList" class="feature-list"></div>
+      </div>
+      <div class="feature-pane" id="pane-cards" hidden>
+        <h3>Flashcards & revision</h3><form id="cardForm" class="feature-form"><input id="cardQuestion" required maxlength="1000" placeholder="Question / prompt"><input id="cardAnswer" required maxlength="3000" placeholder="Answer"><input id="cardDeck" maxlength="80" placeholder="Deck / subject"><button class="diary-btn">Add card</button></form><div class="flashcard" id="flashcard"><p id="flashQuestion">Add your first card to begin.</p><p id="flashAnswer" hidden></p><button id="revealAnswer" type="button" class="diary-btn secondary">Reveal answer</button><button id="nextCard" type="button" class="diary-btn">Next card</button><button id="cardKnown" type="button" class="diary-btn secondary">I knew it ✓</button></div><div id="cardStats" class="feature-muted"></div><div id="cardList" class="feature-list"></div>
+      </div>
+      <div class="feature-pane" id="pane-usage" hidden>
+        <h3>Website usage & Focus Mode Pro</h3><p class="feature-muted">Privacy-first: this panel only summarizes sessions you start here. It does not upload browsing history.</p><div class="focus-controls"><label>Session minutes <input id="focusMinutes" type="number" min="1" max="180" value="25"></label><button id="focusStart" class="diary-btn">Start focus</button><button id="focusStop" class="diary-btn danger">Stop session</button><strong id="focusClock">No active session</strong></div><form id="usageForm" class="feature-form"><input id="usageSite" required placeholder="Website / activity"><input id="usageMinutes" required type="number" min="1" max="1440" placeholder="Minutes"><select id="usageKind"><option value="productive">Productive</option><option value="distraction">Distraction</option></select><button class="diary-btn">Log activity</button></form><div id="usageSummary" class="feature-list"></div>
+      </div>
+      <div class="feature-pane" id="pane-habits" hidden>
+        <h3>Study vs Waste heatmap &amp; habit streaks</h3>
+        <p class="feature-muted">Website mode compares each day’s saved Study and Waste time: teal share = Study, coral share = Waste, and stronger opacity means a higher total relative to the selected range. Tooltips give exact durations and percentages. Choose Month, Year, or All time to explore historical records. Pomodoro mode shows relative Pomodoro study volume only; it is not added to website time because the sources may overlap. Empty days mean no positive time was saved, not proof that you did not study.</p>
+        <div class="study-heatmap-toolbar">
+          <label for="studyHeatmapSource">Data source<select id="studyHeatmapSource"><option value="website">Website Study vs Waste</option><option value="pomodoro">Pomodoro study volume (no Waste comparison)</option></select></label>
+          <label for="studyHeatmapPeriod">View<select id="studyHeatmapPeriod"><option value="rolling52">Recent 52 weeks</option><option value="monthly">Month</option><option value="yearly">Year</option><option value="alltime" selected>All time</option></select></label>
+          <label id="studyHeatmapMonthLabel" for="studyHeatmapMonth" hidden>Month / year<input id="studyHeatmapMonth" type="month" aria-label="Choose heatmap month and year"></label>
+          <label id="studyHeatmapYearLabel" for="studyHeatmapYear" hidden>Year<select id="studyHeatmapYear" aria-label="Choose heatmap year"></select></label>
+        </div>
+        <p id="studyHeatmapSummary" class="study-heatmap-summary" aria-live="polite">Loading saved study records…</p>
+        <div class="study-heatmap-layout"><div class="study-heatmap-weekdays" aria-hidden="true"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div><div class="study-heatmap-scroll" tabindex="0" role="region" aria-label="Scrollable study and waste calendar heatmap"><div id="studyHeatmapMonths" class="study-heatmap-months" aria-hidden="true"></div><div id="studyTimeHeatmap" class="study-heatmap-grid heat-mode-website" role="grid" aria-label="Daily comparison of saved Study and Waste time"></div></div></div>
+        <div id="studyHeatmapLegend" class="study-heatmap-legend" aria-label="Heatmap legend"></div>
+        <p id="studyHeatmapMethod" class="feature-muted study-heatmap-method">Colors compare saved data only; hover or focus a day for its exact values.</p>
+        <h4 class="streaks-heading">Habit streaks</h4><p class="feature-muted">Current streak continues through today, or yesterday if today’s check-in has not happened yet. Best streak is the longest consecutive run of saved positive check-ins; a numeric zero does not count as a completed habit.</p>
+        <div id="habitStreaks" class="feature-list"></div>
+      </div>
+      <div class="feature-pane" id="pane-review" hidden><h3>Daily review</h3><p class="feature-muted">Review completed tasks, habits and study time, then save a short reflection.</p><div id="reviewSummary" class="review-summary"></div><textarea id="reviewText" class="feature-textarea" maxlength="5000" placeholder="What went well? What will you improve tomorrow?"></textarea><button id="saveReview" class="diary-btn">Save today's review</button><div id="reviewHistory" class="feature-list"></div></div>
+      <div class="feature-pane" id="pane-settings" hidden><h3>Webpage customization · independent from extension popup</h3><p class="feature-muted">These settings apply only to this new-tab webpage. Popup and website-skin preferences remain separate.</p>
+        <div class="settings-grid web-custom-grid">
+          <label>Webpage theme<select id="webThemeSetting"><option value="dark">Dark tactical</option><option value="light">Light</option></select></label>
+          <label>Dashboard density<select id="webDensitySetting"><option value="compact">Compact / dense</option><option value="comfortable">Comfortable</option></select></label>
+          <label>Accent color<input id="webAccentSetting" type="color" value="#70d7c4"></label>
+          <label>Background mood<select id="webMoodSetting"><option value="midnight">Midnight</option><option value="aurora">Aurora</option><option value="sunrise">Sunrise</option><option value="plain">Plain / minimal</option></select></label>
+          <label>Font family<select id="webFontSetting"><option value="system">System default</option><option value="Arial, sans-serif">Arial</option><option value="Inter, sans-serif">Inter</option><option value="Verdana, sans-serif">Verdana</option><option value="Georgia, serif">Georgia</option><option value="'Courier New', monospace">Monospace</option></select></label>
+          <label>Base font size<select id="webFontSizeSetting"><option value="12px">Compact · 12px</option><option value="13px">Standard · 13px</option><option value="14px">Comfortable · 14px</option><option value="15px">Large · 15px</option></select></label>
+          <label>Page background color<input id="webBgSetting" type="color" value="#0b1220"></label>
+          <label class="web-bg-upload">Background image<input id="webBgImageSetting" type="file" accept="image/*"><small>Image stays in local extension storage. Large images are resized before saving.</small></label>
+          <label>Image fit<select id="webBgFitSetting"><option value="cover">Cover · fill page</option><option value="contain">Contain · show full image</option><option value="repeat">Tile · repeat image</option></select></label>
+          <label class="web-bg-opacity">Image visibility <output id="webBgOpacityValue">35%</output><input id="webBgOpacitySetting" type="range" min="10" max="100" step="5" value="35"></label>
+          <div class="web-bg-preview-wrap"><img id="webBgPreview" alt="Selected webpage background preview" hidden><button id="webBgClearSetting" class="diary-btn secondary" type="button">Remove background image</button></div>
+          <label>Saved background preset<select id="webPresetSelect"><option value="">Choose saved preset…</option></select></label>
+          <label>Preset name<input id="webPresetName" type="text" maxlength="40" placeholder="e.g. Quiet Study Room"></label>
+          <div class="web-preset-actions"><button id="webPresetSave" class="diary-btn secondary" type="button">Save current preset</button><button id="webPresetApply" class="diary-btn secondary" type="button">Apply selected</button><button id="webPresetDelete" class="diary-btn secondary" type="button">Delete selected</button><span id="webPresetStatus" class="feature-muted" aria-live="polite"></span></div>
+          <label>Card transparency<select id="webCardSetting"><option value="solid">Solid cards</option><option value="soft">Soft / blended</option></select></label>
+          <label class="suite-check"><input id="webReduceMotionSetting" type="checkbox"> Reduce animations</label>
+          <label class="suite-check"><input id="webWideSetting" type="checkbox" checked> Use full-width layout</label>
+        </div>
+        <div class="suite-bottom"><button id="webStyleApply" class="diary-btn">Apply webpage settings</button><button id="webStyleReset" class="diary-btn secondary" type="button">Reset webpage style</button><span id="webStyleStatus" class="feature-muted">Stored separately from popup customization.</span></div>
+        <h4>Custom daily reminder</h4><p class="feature-muted">Choose your own notification time and message. Chrome must be running and system notifications must be allowed.</p>
+        <div class="settings-grid custom-reminder-grid"><label class="suite-check"><input id="customReminderEnabled" type="checkbox"> Enable daily reminder</label><label>Reminder time<input id="customReminderTime" type="time" value="19:00"></label><label>Notification message<input id="customReminderMessage" type="text" maxlength="220" value="Time for your planned study check-in."></label></div>
+        <div class="suite-bottom"><button id="customReminderSave" class="diary-btn" type="button">Save reminder</button><span id="customReminderStatus" class="feature-muted" aria-live="polite">No reminder has been configured here.</span></div>
+        <h4>Other preferences</h4><div class="settings-grid"><label>Dashboard density<select id="densitySetting"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label><label>Show analytics card<select id="analyticsSetting"><option value="show">Show</option><option value="hide">Hide</option></select></label><label>Focus reminder<select id="reminderSetting"><option value="off">Off</option><option value="on">On (session notifications)</option></select></label></div><button id="savePreferences" class="diary-btn">Save preferences</button><p class="feature-muted">Keyboard shortcuts: Ctrl+Shift+Y = quick task; Ctrl+Shift+U = quick note (Chrome → Extensions → Keyboard shortcuts to customize).</p></div>
+      <div class="feature-pane" id="pane-suite" hidden>
+        <div class="suite-hero"><div><span class="suite-eyebrow">ARUN PRO WORKSPACE</span><h3>Your all-in-one study cockpit</h3><p class="feature-muted">Plan, create, revise, track and customize. New records stay in this browser.</p></div><div class="suite-orb">✦</div></div>
+        <div class="suite-grid">
+          <article class="suite-tile"><span class="suite-icon">🗓️</span><h4>Daily planner & timetable</h4><form id="suitePlanForm" class="suite-form"><input id="suitePlanTitle" required maxlength="120" placeholder="Study block / task"><input id="suitePlanWhen" type="datetime-local" aria-label="Schedule time"><select id="suitePlanKind"><option>Study</option><option>Class</option><option>Assignment</option><option>Break</option></select><button class="diary-btn">Add plan</button></form><div id="suitePlans" class="suite-list"></div></article>
+          <article class="suite-tile"><span class="suite-icon">🎯</span><h4>Goals & challenges</h4><form id="suiteGoalForm" class="suite-form"><input id="suiteGoalTitle" required maxlength="100" placeholder="Goal (e.g. 20 problems)"><input id="suiteGoalTarget" type="number" min="1" max="10000" value="5" aria-label="Goal target"><button class="diary-btn">Create goal</button></form><div id="suiteGoals" class="suite-list"></div></article>
+          <article class="suite-tile"><span class="suite-icon">💸</span><h4>Expense tracker</h4><form id="suiteExpenseForm" class="suite-form"><input id="suiteExpenseName" required maxlength="80" placeholder="Expense / category"><input id="suiteExpenseAmount" type="number" min="0.01" step="0.01" required placeholder="Amount (₹)"><button class="diary-btn">Add expense</button></form><div id="suiteExpenses" class="suite-list"></div></article>
+          <article class="suite-tile"><span class="suite-icon">⏰</span><h4>Reminders & deadlines</h4><form id="suiteReminderForm" class="suite-form"><input id="suiteReminderTitle" required maxlength="120" placeholder="Reminder"><input id="suiteReminderWhen" type="datetime-local" required aria-label="Reminder date and time"><button class="diary-btn">Save reminder</button></form><div id="suiteReminders" class="suite-list"></div></article>
+          <article class="suite-tile"><span class="suite-icon">🧪</span><h4>Quick quiz maker</h4><form id="suiteQuizForm" class="suite-form"><input id="suiteQuizQ" required maxlength="500" placeholder="Question"><input id="suiteQuizA" required maxlength="1000" placeholder="Answer"><input id="suiteQuizDeck" maxlength="80" placeholder="Subject / deck"><button class="diary-btn">Save question</button></form><div id="suiteQuizList" class="suite-list"></div></article>
+          <article class="suite-tile"><span class="suite-icon">📖</span><h4>Read-it-later library</h4><form id="suiteReadForm" class="suite-form"><input id="suiteReadTitle" required maxlength="160" placeholder="Article / tutorial title"><input id="suiteReadUrl" type="url" placeholder="https://…"><button class="diary-btn">Save resource</button></form><div id="suiteReadList" class="suite-list"></div></article>
+          <article class="suite-tile"><span class="suite-icon">⌨️</span><h4>Code snippet vault</h4><form id="suiteCodeForm" class="suite-form"><input id="suiteCodeTitle" required maxlength="100" placeholder="Snippet title"><select id="suiteCodeLang"><option>JavaScript</option><option>Python</option><option>HTML/CSS</option><option>C++</option><option>SQL</option><option>Other</option></select><textarea id="suiteCodeBody" required maxlength="12000" placeholder="Paste reusable code…"></textarea><button class="diary-btn">Save snippet</button></form><div id="suiteCodeList" class="suite-list"></div></article>
+          <article class="suite-tile"><span class="suite-icon">🧮</span><h4>Quick calculator</h4><div class="suite-form"><input id="suiteCalcInput" placeholder="Example: (25*4)/2" aria-label="Calculator expression"><button id="suiteCalcGo" class="diary-btn" type="button">Calculate</button><output id="suiteCalcResult" class="suite-output">Ready</output></div><p class="feature-muted">Basic arithmetic only. Expressions are validated before evaluation.</p></article>
+          <article class="suite-tile"><span class="suite-icon">🎧</span><h4>Focus sound & timer</h4><p class="feature-muted">Use the reliable focus timer in Usage & Focus. Optional built-in tone preview.</p><div class="suite-form"><select id="suiteSound"><option value="bell">Soft bell</option><option value="double">Double chime</option><option value="wood">Woodblock</option></select><button id="suiteSoundTest" class="diary-btn" type="button">Test sound</button><label class="suite-check"><input id="suiteSoundEnabled" type="checkbox" checked> Sound alerts enabled</label></div></article>
+          <article class="suite-tile"><span class="suite-icon">🎨</span><h4>Look & feel</h4><div class="suite-form"><label>Accent color <input id="suiteAccent" type="color" value="#8da7ff"></label><label>Background mood <select id="suiteMood"><option value="aurora">Aurora</option><option value="midnight">Midnight</option><option value="sunrise">Sunrise</option></select></label><button id="suiteStyleSave" class="diary-btn" type="button">Apply style</button></div><p class="feature-muted">Your existing light/dark theme setting remains available.</p></article>
+          <article class="suite-tile"><span class="suite-icon">✨</span><h4>Daily inspiration</h4><p id="suiteQuote" class="suite-quote">Small steps, repeated daily, become remarkable progress.</p><button id="suiteQuoteNext" class="diary-btn secondary" type="button">New quote</button></article>
+          <article class="suite-tile"><span class="suite-icon">🏆</span><h4>XP & achievements</h4><p class="feature-muted">Earn XP from saved goals and completed plans.</p><div id="suiteRewards" class="suite-list"></div></article>
+        </div>
+        <div class="suite-bottom"><button id="suiteExport" class="diary-btn secondary" type="button">Export Pro Suite data</button><span class="feature-muted">Pro Suite records use separate storage keys to avoid overwriting existing tasks, notes or diary entries.</span></div>
+      </div>
+      <div class="feature-pane" id="pane-safety" hidden><h3>Data Safety Center</h3><div class="safety-grid"><div><strong>1</strong><b>Export everything</b><p>Downloads current extension storage as JSON.</p><button id="safetyExport" class="diary-btn">Export full backup</button></div><div><strong>2</strong><b>Preview & merge</b><p>Existing storage keys stay as-is; import only fills missing supported keys.</p><button id="safetyImport" class="diary-btn secondary">Choose backup</button></div><div><strong>3</strong><b>Health check</b><p>Check common data types without deleting or changing anything.</p><button id="healthCheck" class="diary-btn secondary">Run check</button></div></div><div id="healthReport" class="feature-list"></div><div class="feature-inline"><button id="exportTrash" class="diary-btn secondary">Export recently deleted</button><button id="restoreTrash" class="diary-btn secondary">Restore last deleted item</button></div><p class="feature-muted">No automatic rollback can guarantee recovery from browser-profile removal. Keep a backup outside Chrome too.</p></div>
+
+      <div class="other-quick-actions" aria-label="Quick actions and data controls">
+        <div class="feature-section-subhead"><h3>QUICK ACTIONS</h3><p>Diary, focus controls, refresh and backup tools are kept here at the bottom, below the main analytics and other tools.</p></div>
+
+    <nav class="nt-actions" aria-label="Quick actions">
+      <button class="nt-action primary" id="diaryOpen"><span>✎</span><span><b>Private Diary</b><small>Write your thoughts</small></span></button>
+      <button class="nt-action" id="quickFocus"><span>◷</span><span><b>Focus session</b><small>Build a study streak</small></span></button>
+      <button class="nt-action" id="refreshDashboard"><span>↻</span><span><b>Refresh overview</b><small>Sync latest data</small></span></button>
+      <button class="nt-action" id="themeToggle"><span>◐</span><span><b>Toggle theme</b><small>Light / dark mode</small></span></button>
+      <button class="nt-action" id="exportBackup"><span>⇩</span><span><b>Backup data</b><small>Download JSON backup</small></span></button>
+      <button class="nt-action" id="importBackup"><span>⇧</span><span><b>Restore / merge</b><small>Import backup safely</small></span></button>
+      <input id="backupFile" type="file" accept="application/json,.json" hidden>
+    </nav>
+
+      </div>
+    </section>
+
+    <footer class="nt-foot">
+      <button id="ntOff" class="nt-link">Turn off this new-tab page</button>
+    </footer>
+  </main>
+  <script src="newtab.js"></script>
+</body>
+</html>
